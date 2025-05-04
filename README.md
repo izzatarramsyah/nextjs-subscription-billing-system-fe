@@ -21,13 +21,6 @@ A SaaS-based Subscription Billing System for digital products (eBook Library), s
 
 ## 🛠️ Tech Stack
 
-### Backend
-- Golang (Gin Framework)
-- GORM (ORM for Golang)
-- PostgreSQL
-- Clean Architecture Approach
-
-### Frontend
 - Next.js (React Framework)
 - TailAdmin Template (Tailwind CSS)
 - REST API Integration
