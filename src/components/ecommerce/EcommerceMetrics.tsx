@@ -15,11 +15,12 @@ interface Dashboard {
   recent_orders: any;
 }
 
-type EcommerceMetricsProps = {
+interface EcommerceMetricsProps {
   dashboardInfo: Dashboard | undefined;
 };
 
-export const EcommerceMetrics = ({ dashboardInfo }: EcommerceMetricsProps) => {
+export default function EcommerceMetrics({ dashboardInfo }: EcommerceMetricsProps) {
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
       {/* <!-- Metric Item Start --> */}

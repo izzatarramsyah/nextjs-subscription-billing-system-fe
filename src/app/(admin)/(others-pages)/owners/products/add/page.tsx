@@ -2,10 +2,16 @@
 "use client";
 
 import React, { useState } from "react";
-import ProductForm from "@/components/prodcuts/ProductForm";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { addProduct } from "@/services/apiService";
 import Alert from "@/components/ui/alert/Alert";
+
+const ProductForm = dynamic(() => import('@/components/products/ProductForm'), {
+  ssr: false,
+  loading: () => <p className="text-center py-10">Loading Form...</p>,
+});
+
 
 export default function AddProductPage() {
   const router = useRouter();

@@ -59,18 +59,18 @@ export default function UserPage() {
   };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await getProducts();
-        console.log(res.data)
-        setProducts(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-      }
-    };
-
     fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await getProducts();
+      console.log(res.data)
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+    }
+  };
 
   const handleAdd = () => {
     router.push("/admin/products/add");
@@ -82,57 +82,69 @@ export default function UserPage() {
 
   const handlUpdateStatus = async (productId: string, selectedOption: string) => {
     const res = await updateStatusProduct({ id : productId, status : selectedOption });
-    setProducts((prev) => prev.filter((product) => product.ID !== productId)); 
-    setAlert({
-      variant: 'success',
-      title: 'Product Updated',
-      message: 'Product has been successfully updated.',
-    });
+    if (res.status == 200) {
+      fetchProducts();
+      setAlert({
+        variant: 'success',
+        title: 'Product Status Updated',
+        message: 'Product status has been successfully updated.',
+      });
+    } else {
+      setAlert({
+        variant: 'error',
+        title: 'Product Status Failed',
+        message: 'Product status failed updated.',
+      });
+    }
     setTimeout(() => {
       setAlert(null); 
-      router.push("/admin/products");
     }, 3000);
     return;
   };
 
   const handleShowOwnerDetail = async (id: string) => {
-    const res = await getUserByID({ id });
-    setOwnerDetailData(res); 
+    const res = await getUserByID(id);
+    setOwnerDetailData(res?.status === 200 && res.data ? res.data : []);
     setOwnerDetail(true);
   };
   
   const handleShowDetail = async (productId: string) => {
-    try {
-      // 1. Panggil getAccess
-      const accessData = await getAccessProduct({ id : productId });
-  
-      if (!accessData.fileUrl) {
-        console.error("File URL not found");
-        setAlert({
-          variant: 'error',
-          title: 'View Failed',
-          message: 'Subscription inactive or expired',
-        });
-        setTimeout(() => {
-          setAlert(null); 
-          router.push("/admin/products");
-        }, 3000);
-        return;
-      }
-  
-      // 2. Panggil serve API, kirim FilePath
-      const serveRes = await serveProduct({ fileUrl: accessData.fileUrl });
-  
-      // ✅ response.data sudah berupa Blob
-      const fileURL = URL.createObjectURL(serveRes.data); 
-  
-      // 3. Tampilkan di iframe
-      setPdfUrl(fileURL);
-      setPDFViewOpen(true);
-
-    } catch (error) {
-      console.error('Error previewing ebook', error);
-    }
+     try {
+          const accessData = await getAccessProduct(productId);
+          if (!accessData.data) {
+              console.error("File URL not found");
+              setAlert({
+                variant: 'error',
+                title: 'View Failed',
+                message: 'Subscription inactive or expired',
+              });
+              setTimeout(() => {
+                setAlert(null); 
+              }, 3000);
+              return;
+          }
+            
+          const serveRes = await serveProduct({ fileUrl: accessData.data });
+          if (!serveRes.data) {
+              setAlert({
+                variant: 'error',
+                title: 'View Failed',
+                message: 'Failed to open file',
+              });
+              setTimeout(() => {
+                setAlert(null); 
+              }, 3000);
+              return;
+          }  
+    
+          const fileURL = URL.createObjectURL(serveRes.data); 
+            
+          setPdfUrl(fileURL);
+          setPDFViewOpen(true);
+          
+        } catch (error) {
+          console.error('Error previewing ebook', error);
+        }
   };
   
   useEffect(() => {
@@ -147,11 +159,13 @@ export default function UserPage() {
     <div>
       {/* Tampilkan alert jika ada */}
       {alert && alert.variant && (
-        <Alert
-          variant={alert.variant}
-          title={alert.title}
-          message={alert.message}
-        />
+        <div className="mb-4">
+          <Alert 
+            variant={alert.variant}
+            title={alert.title}
+            message={alert.message}
+          />
+        </div>
       )}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="flex justify-between items-center px-5 py-4">
@@ -230,7 +244,7 @@ export default function UserPage() {
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <select
                         className="border rounded px-2 py-1 bg-white dark:bg-dark-900 text-sm"
-                        value={product.Status} // Sesuaikan dengan data kamu
+                        value={product.Status} 
                         onChange={(e) => {
                           setSelectedProductId(product.ID);
                           setNewStatus(e.target.value);

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { FaEdit, FaTrash, FaPlus, FaInfoCircle } from "react-icons/fa";
 import Badge from "@/components/ui/badge/Badge";
-import { getProductsByOwnerID, updateStatusProduct } from "@/services/apiService";
+import { getProductsByOwnerID, updateStatusProduct, getAccessProduct, serveProduct } from "@/services/apiService";
 import { useRouter } from "next/navigation";  // Import useRouter
 import { Modal } from "@/components/ui/modal";
 import Alert from "@/components/ui/alert/Alert";
@@ -34,6 +34,9 @@ export default function OwnerProductsPage() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const [products, setProducts] = useState<Products[]>([]);
+  const [ownerDetailData, setOwnerDetailData] = useState<any>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isPDFViewOpen, setPDFViewOpen] = useState(false);
 
   const [alert, setAlert] = useState<{
     variant: "success" | "error" | "warning" | "info" | null;
@@ -81,8 +84,44 @@ export default function OwnerProductsPage() {
     }
   };
 
-  const handleShowDetail = async (id: string) => {
-
+  const handleShowDetail = async (productId: string) => {
+    debugger;
+        try {
+          const accessData = await getAccessProduct(productId);
+          if (!accessData.data) {
+              console.error("File URL not found");
+              setAlert({
+                variant: 'error',
+                title: 'View Failed',
+                message: 'Subscription inactive or expired',
+              });
+              setTimeout(() => {
+                setAlert(null); 
+              }, 3000);
+              return;
+          }
+            
+          const serveRes = await serveProduct({ fileUrl: accessData.data });
+          if (!serveRes.data) {
+              setAlert({
+                variant: 'error',
+                title: 'View Failed',
+                message: 'Failed to open file',
+              });
+              setTimeout(() => {
+                setAlert(null); 
+              }, 3000);
+              return;
+          }  
+    
+          const fileURL = URL.createObjectURL(serveRes.data); 
+            
+          setPdfUrl(fileURL);
+          setPDFViewOpen(true);
+          
+        } catch (error) {
+          console.error('Error previewing ebook', error);
+        }
   };
 
   return (
@@ -223,6 +262,32 @@ export default function OwnerProductsPage() {
             </div>
           </div>
         </Modal>
+<Modal isOpen={isPDFViewOpen} onClose={() => setPDFViewOpen(false)}>
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Ebook View</h2>
+
+              {/* Iframe untuk tampilkan PDF */}
+              {pdfUrl && (
+                <iframe
+                  src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                  title="Ebook Preview"
+                  width="100%"
+                  height="600px"
+                  style={{ marginTop: '20px', border: '1px solid #ccc' }}
+                />
+              )}
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setPDFViewOpen(false)}
+                  className="px-4 py-2 rounded bg-gray-300 text-gray-800 hover:bg-gray-400"
+                >
+                  Tutup
+                </button>
+            </div>
+          </div>
+        </Modal>
+
       </div>
     </div>
   );

@@ -1,12 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { Metadata } from "next";
-import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import React, { useEffect, useState } from "react";
-import { MonthlyTarget } from "@/components/ecommerce/MonthlyTarget";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import { getDashboardInfo } from "@/services/apiService";
 
@@ -15,6 +12,11 @@ import { getDashboardInfo } from "@/services/apiService";
 //     "Next.js E-commerce Dashboard | TailAdmin - Next.js Dashboard Template",
 //   description: "This is Next.js Home for TailAdmin Dashboard Template",
 // };
+
+const EcommerceMetrics = dynamic(() => import("@/components/ecommerce/EcommerceMetrics"), { ssr: false });
+const MonthlySalesChart = dynamic(() => import("@/components/ecommerce/MonthlySalesChart"), { ssr: false });
+const MonthlyTarget = dynamic(() => import("@/components/ecommerce/MonthlyTarget"), { ssr: false });
+const RecentOrders = dynamic(() => import("@/components/ecommerce/RecentOrders"), { ssr: false });
 
 interface Dashboard {
   total_subscribers: number;
@@ -40,8 +42,7 @@ interface OrderSummary {
   status: "active" | "inactive";
 }
 
-export default function Ecommerce() {
-
+export default function DashboardPage() {
 
   const [dashboardInfo, setDashboardInfo] = useState<Dashboard>();
   
@@ -49,7 +50,8 @@ export default function Ecommerce() {
     const fetchDashboard = async () => {
       try {
         const res = await getDashboardInfo();
-        setDashboardInfo(res.data || null);
+        debugger;
+        setDashboardInfo(res.status == 200 ? res.data : null);
       } catch (err) {
         console.error("Failed to fetch dashboard", err);
       }
@@ -58,9 +60,13 @@ export default function Ecommerce() {
     fetchDashboard();
   }, []);
 
+  if (!dashboardInfo) {
+    return <div>Loading dashboard...</div>;
+  }
 
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
+      
       <div className="col-span-12 space-y-6 xl:col-span-7">
         <EcommerceMetrics dashboardInfo={dashboardInfo} />
 
@@ -70,10 +76,6 @@ export default function Ecommerce() {
       <div className="col-span-12 xl:col-span-5">
         <MonthlyTarget dashboardInfo={dashboardInfo}/>
       </div>
-
-      {/* <div className="col-span-12">
-        <StatisticsChart />
-      </div> */}
 
       <div className="col-span-12">
         <RecentOrders recent_orders={dashboardInfo?.recent_orders ?? []} />

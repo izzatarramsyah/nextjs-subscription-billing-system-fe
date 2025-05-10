@@ -1,11 +1,16 @@
 // src/app/(admin)/(others-pages)/users/add/page.tsx
 "use client";
 
+import dynamic from "next/dynamic";
 import React, { useState } from "react";
-import PlanForm from "@/components/plans/PlanForm";
 import { useRouter } from "next/navigation";
 import { createPlan } from "@/services/apiService";
 import Alert from "@/components/ui/alert/Alert";
+
+const PlanForm = dynamic(() => import('@/components/plans/PlanForm'), {
+  ssr: false,
+  loading: () => <p className="text-center py-10">Loading Form...</p>,
+});
 
 export default function AddPlanPage() {
   const router = useRouter();
@@ -24,11 +29,20 @@ export default function AddPlanPage() {
         Price: parseFloat(data.Price), 
         DurationMonths: parseInt(data.DurationMonths),
       });
-      setAlert({
-        variant: 'success',
-        title: 'Plan Created',
-        message: 'Plan has been successfully created.',
-      });
+      if ( res.status == 200 ) {
+        setAlert({
+          variant: 'success',
+          title: 'Plan Created',
+          message: 'Plan has been successfully created.',
+        });
+      } else {
+        setAlert({
+          variant: 'error',
+          title: 'Plan Failed',
+          message: 'Plan failed to created.',
+        });
+      }
+    
       setTimeout(() => {
         setAlert(null); 
         router.push("/admin/plans");

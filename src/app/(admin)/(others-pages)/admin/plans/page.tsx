@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import Badge from "@/components/ui/badge/Badge";
-import { getPlans } from "@/services/apiService";
+import { getPlans, getAccessProduct, serveProduct, deletePlan } from "@/services/apiService";
 import { useRouter } from "next/navigation";  // Import useRouter
 import { Modal } from "@/components/ui/modal";
 import Alert from "@/components/ui/alert/Alert";
@@ -36,11 +36,15 @@ interface Plan {
 
 export default function UserPage() {
 
-  const router = useRouter();  // Hook untuk melakukan navigasi
+  const router = useRouter();  
 
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
+  const [isPDFViewOpen, setPDFViewOpen] = useState(false);
+  
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  
   const [plans, setPlans] = useState<Plan[]>([]);
 
   const [alert, setAlert] = useState<{
@@ -50,17 +54,17 @@ export default function UserPage() {
   } | null>(null);
 
   useEffect(() => {
-    const fetchPlan = async () => {
-      try {
-        const res = await getPlans();
-        setPlans(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch users", err);
-      }
-    };
-
     fetchPlan();
   }, []);
+
+  const fetchPlan = async () => {
+    try {
+      const res = await getPlans();
+      setPlans(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    }
+  };
 
   const handleAdd = () => {
     router.push("/admin/plans/add");
@@ -71,23 +75,70 @@ export default function UserPage() {
   };
 
   const handleDelete = async (id: string) => {
-    console.log("Delete user with ID", id);
-    
+    const res = await deletePlan(id);
+    if (res.status == 200) {
+       fetchPlan();
+       setAlert({
+         variant: 'success',
+         title: 'Plan Deleted',
+         message: 'Plan has been successfully deleted.',
+       });
+    } else {
+       setAlert({
+        variant: 'error',
+        title: 'Plan Deleted Failed',
+        message: 'Plan failed to delete.',
+       });
+    }
+    setTimeout(() => {
+      setAlert(null); 
+    }, 3000);
+    return;
   };
 
   const handleOpenModal = async (id: string) => {
-
+    try {
+      const accessData = await getAccessProduct(id);
+      if (!accessData.data) {
+        console.error("File URL not found");
+        setAlert({
+           variant: 'error',
+           title: 'View Failed',
+           message: 'Subscription inactive or expired',
+        });
+        return;
+      }
+              
+      const serveRes = await serveProduct({ fileUrl: accessData.data });
+      if (!serveRes.data) {
+        setAlert({
+          variant: 'error',
+          title: 'View Failed',
+          message: 'Failed to open file',
+        });
+        return;
+     }  
+      
+      const fileURL = URL.createObjectURL(serveRes.data); 
+              
+      setPdfUrl(fileURL);
+      setPDFViewOpen(true);
+            
+    } catch (error) {
+        console.error('Error previewing ebook', error);
+    }
   };
 
   return (
     <div>
-      {/* Tampilkan alert jika ada */}
       {alert && alert.variant && (
-        <Alert
-          variant={alert.variant}
-          title={alert.title}
-          message={alert.message}
-        />
+        <div className="mb-4">
+          <Alert 
+            variant={alert.variant}
+            title={alert.title}
+            message={alert.message}
+          />
+        </div>
       )}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="flex justify-between items-center px-5 py-4">
@@ -186,10 +237,36 @@ export default function UserPage() {
           </div>
         </div>
 
+        <Modal isOpen={isPDFViewOpen} onClose={() => setPDFViewOpen(false)}>
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Ebook View</h2>
+
+              {/* Iframe untuk tampilkan PDF */}
+              {pdfUrl && (
+                <iframe
+                  src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                  title="Ebook Preview"
+                  width="100%"
+                  height="600px"
+                  style={{ marginTop: '20px', border: '1px solid #ccc' }}
+                />
+              )}
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setPDFViewOpen(false)}
+                  className="px-4 py-2 rounded bg-gray-300 text-gray-800 hover:bg-gray-400"
+                >
+                  Tutup
+                </button>
+            </div>
+          </div>
+        </Modal>
+
         <Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
           <div className="p-6">
             <h2 className="text-lg font-semibold mb-4">Konfirmasi Hapus</h2>
-            <p className="mb-6">Apakah kamu yakin ingin menghapus user ini?</p>
+            <p className="mb-6">Apakah kamu yakin ingin menghapus plan ini?</p>
 
             <div className="flex justify-end gap-3">
               <button

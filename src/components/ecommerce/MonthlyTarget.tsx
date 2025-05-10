@@ -31,7 +31,9 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export const MonthlyTarget = ({ dashboardInfo }: MonthlyTargetProps) => {
+// export const MonthlyTarget = ({ dashboardInfo }: MonthlyTargetProps) => {
+export default function MonthlyTarget({ dashboardInfo }: MonthlyTargetProps) {
+
   const series = [dashboardInfo?.monthly_percentage?? 0];
   const options: ApexOptions = {
     colors: ["#465FFF"],

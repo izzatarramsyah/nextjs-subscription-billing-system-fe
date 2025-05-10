@@ -9,10 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FaRegCheckCircle, FaInfoCircle } from "react-icons/fa";
 import Badge from "@/components/ui/badge/Badge";
 import { getLibraryByUserID, getAccessProduct, serveProduct } from "@/services/apiService";
-import { useRouter } from "next/navigation";  // Import useRouter
 import { Modal } from "@/components/ui/modal";
 import Alert from "@/components/ui/alert/Alert";
 
@@ -24,11 +22,10 @@ interface LibraryItem {
   subscription_start: string;
   subscription_end: string;
   subscription_status: string;
+  payment_status: string;
 }
 
 export default function UserPage() {
-
-  const router = useRouter();  // Hook untuk melakukan navigasi
 
   const [libraryItem, setLibraryItem] = useState<LibraryItem[]>([]);
 
@@ -63,49 +60,56 @@ export default function UserPage() {
     return daysLeft > 0 ? `${daysLeft} hari tersisa` : "Berakhir";
   };
 
-   const handleShowDetail = async (productId: string) => {
-      try {
-        // 1. Panggil getAccess
-        const accessData = await getAccessProduct({ id : productId });
-    
-        if (!accessData.fileUrl) {
-          console.error("File URL not found");
-          setAlert({
-            variant: 'error',
-            title: 'View Failed',
-            message: 'Subscription inactive or expired',
-          });
-          setTimeout(() => {
-            setAlert(null); 
-            router.push("/admin/products");
-          }, 3000);
-          return;
-        }
-    
-        // 2. Panggil serve API, kirim FilePath
-        const serveRes = await serveProduct({ fileUrl: accessData.fileUrl });
-    
-        // ✅ response.data sudah berupa Blob
-        const fileURL = URL.createObjectURL(serveRes.data); 
-    
-        // 3. Tampilkan di iframe
-        setPdfUrl(fileURL);
-        setPDFViewOpen(true);
-  
-      } catch (error) {
-        console.error('Error previewing ebook', error);
-      }
-    };
+   const handleShowDetail = async (id: string) => {
+       try {
+        debugger;
+        const accessData = await getAccessProduct(id);
+         if (!accessData.data) {
+             console.error("File URL not found");
+             setAlert({
+               variant: 'error',
+               title: 'View Failed',
+               message: 'Subscription inactive or expired',
+             });
+             setTimeout(() => {
+              setAlert(null); 
+            }, 3000);
+             return;
+         }
+           
+         const serveRes = await serveProduct({ fileUrl: accessData.data });
+         if (!serveRes.data) {
+             setAlert({
+               variant: 'error',
+               title: 'View Failed',
+               message: 'Failed to open file',
+             });
+             setTimeout(() => {
+              setAlert(null); 
+            }, 3000);
+            return;
+         }  
+   
+         const fileURL = URL.createObjectURL(serveRes.data); 
+           
+         setPdfUrl(fileURL);
+         setPDFViewOpen(true);
+         
+       } catch (error) {
+         console.error('Error previewing ebook', error);
+       }
+     };
 
   return (
     <div>
-      {/* Tampilkan alert jika ada */}
       {alert && alert.variant && (
-        <Alert
+        <div className="mb-4">
+        <Alert 
           variant={alert.variant}
           title={alert.title}
           message={alert.message}
         />
+        </div>
       )}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
@@ -166,13 +170,22 @@ export default function UserPage() {
                         : "Tidak ada tanggal"}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start text-theme-sm space-x-2">
-                      <button
-                        onClick={() => handleShowDetail(item.product_id)}
-                        className="text-blue-600 hover:text-green-700"
-                        title="View Product"
-                      >
-                        Open
-                      </button>
+                      {item.payment_status === 'pending' ? (
+                          <Badge
+                          size="sm"
+                          color={"warning"}
+                        >
+                          Waiting Payment Confirmation
+                        </Badge>
+                      ) : (
+                        <button
+                          onClick={() => handleShowDetail(item.product_id)}
+                          className="text-blue-600 hover:text-green-700"
+                          title="View Product"
+                        >
+                          Open
+                        </button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -191,7 +204,6 @@ export default function UserPage() {
                  <div className="p-6">
                    <h2 className="text-lg font-semibold mb-4">Ebook View</h2>
        
-                     {/* Iframe untuk tampilkan PDF */}
                      {pdfUrl && (
                        <iframe
                          src={`${pdfUrl}#toolbar=0&navpanes=0`}

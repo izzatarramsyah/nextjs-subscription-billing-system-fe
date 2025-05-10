@@ -51,13 +51,16 @@ export default function AdminLayout({
       return;
     }
 
+    debugger;
     // Pengalihan berdasarkan role setelah login
-    if (role === "admin" && pathPrefix !== "admin" ) {
-      router.push("/admin");
-    } else if (role === "subscriber" &&  pathPrefix !== "subscriber" ) {
+    if (role === "admin" && (pathPrefix !== "admin" && pathPrefix !== "calendar") ) {
+      router.push("/");
+    } else if (role === "subscriber" &&  (pathPrefix !== "subscriber" && pathPrefix !== "calendar") ) {
       router.push("/subscriber/products");
-    } else if (role === "owner" && pathPrefix !== "owners") {
-      router.push("/owners/");
+    } else if (role === "owner" && (pathPrefix !== "owners" && pathPrefix !== "calendar") ) {
+      router.push("/");
+    } else if (role === "guest" && pathPrefix !== "guest" ) {
+      router.push("/guest");
     }
 
     // Setelah pengalihan selesai, set isRedirecting menjadi false

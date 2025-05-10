@@ -37,7 +37,9 @@ export default function PlansForm({ mode, initialData, onSubmit }: Props) {
 
   const pathname = usePathname();
   const pathPrefix = pathname.split("/")[1]; // akan menangkap 'user', 'owner', atau 'admin'
-    
+
+  const [productName, setProductName] = useState("");
+
   const [title, setTitle] = useState("");
   const [optionsProduct, setOptionsProduct] = useState<SelectOption[]>([]);
 
@@ -48,6 +50,7 @@ export default function PlansForm({ mode, initialData, onSubmit }: Props) {
   ];
 
   const [form, setForm] = useState({
+    ID: initialData?.ID,
     ProductID: initialData?.ProductID || "",
     Plan: initialData?.Plan || "",
     Price: initialData?.Price || 0,
@@ -57,13 +60,10 @@ export default function PlansForm({ mode, initialData, onSubmit }: Props) {
   useEffect(() => {
     const loadOptions = async () => {
       if (mode === "edit" && initialData?.ProductID) {
-        const product = await getProductByID({ id: initialData.ProductID });
-        const singleOption = {
-          label: product.Name,
-          value: product.ID,
-        };
-        setOptionsProduct([singleOption]);
+        const productRes = await getProductByID({ id: initialData.ProductID });
+        setProductName(productRes.data.Name);
         setForm({
+          ID: initialData.ID,
           ProductID: initialData.ProductID,
           Plan: initialData.Plan,
           Price: initialData.Price,
@@ -72,8 +72,8 @@ export default function PlansForm({ mode, initialData, onSubmit }: Props) {
         setTitle("Edit Product");
       } else {
         setTitle("Tambah Product");
-        const products = await getProducts();
-        const mappedOptions = products.data.map((product: any) => ({
+        const productRes = await getProducts();
+        const mappedOptions = productRes.data.map((product: any) => ({
           label: product.Name,
           value: product.ID,
         }));
@@ -99,24 +99,35 @@ export default function PlansForm({ mode, initialData, onSubmit }: Props) {
     <ComponentCard title={title}>
       <form onSubmit={handleSubmit} className="space-y-4">
         
-      <div>
+        <div>
           <Label>Select Product</Label>
           <div className="relative">
-            <Select
-              options={optionsProduct}
-              value={form.ProductID}
-              placeholder="Select an option"
-              onChange={(value) =>
-                setForm((prevForm) => ({
-                  ...prevForm,
-                  ProductID: value,
-                }))
-              }
-              className="dark:bg-dark-900"
-            />
-            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
-              <ChevronDownIcon />
-            </span>
+            {mode === 'edit' ? (
+              <Input
+                type="text"
+                name="ProductID"
+                value={productName}
+                className="bg-gray-100 dark:bg-dark-900"
+              />
+            ) : (
+              <>
+                <Select
+                  options={optionsProduct}
+                  value={form.ProductID}
+                  placeholder="Select an option"
+                  onChange={(value) =>
+                    setForm((prevForm) => ({
+                      ...prevForm,
+                      ProductID: value,
+                    }))
+                  }
+                  className="dark:bg-dark-900"
+                />
+                <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                  <ChevronDownIcon />
+                </span>
+              </>
+            )}
           </div>
         </div>
 

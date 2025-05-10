@@ -1,32 +1,16 @@
 'use client'; // Ini WAJIB ditaruh di paling atas!
 
-import Calendar from "@/components/calendar/Calendar";
+import dynamic from "next/dynamic";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import React, { useEffect, useState } from "react";
 import { addEventCalender, getEvents } from "@/services/apiService";
 import Alert from "@/components/ui/alert/Alert";
+import Cookies from 'js-cookie';
 
-// const initialEvents = [
-//   {
-//     id: "1",
-//     title: "Event Conf.",
-//     start: new Date().toISOString().split("T")[0],
-//     extendedProps: { calendar: "Danger" },
-//   },
-//   {
-//     id: "2",
-//     title: "Meeting",
-//     start: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-//     extendedProps: { calendar: "Success" },
-//   },
-//   {
-//     id: "3",
-//     title: "Workshop",
-//     start: new Date(Date.now() + 172800000).toISOString().split("T")[0],
-//     end: new Date(Date.now() + 259200000).toISOString().split("T")[0],
-//     extendedProps: { calendar: "Primary" },
-//   },
-// ];
+const Calendar = dynamic(() => import('@/components/calendar/Calendar'), {
+  ssr: false,
+  loading: () => <p className="text-center py-10">Loading calendar...</p>,
+});
 
 interface EventType {
   ID: string;
@@ -39,7 +23,13 @@ interface EventType {
 
 export default function page() {
 
-  const [events, setEvents] = useState<any[]>([]);
+    const [role, setRole] = useState("guest");
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const calendarsEvents = {
+      Event: "success",
+    };
 
     const [alert, setAlert] = useState<{
       variant: "success" | "error" | "warning" | "info" | null;
@@ -47,8 +37,14 @@ export default function page() {
       message: string;
     } | null>(null);
 
-  useEffect(() => {
+    useEffect(() => {
+      const role = Cookies.get('role') || 'guest'; 
+      setRole(role);
+      fetchReminders();
+    }, []);
+
     const fetchReminders = async () => {
+      setLoading(true);
       try {
         const res = await getEvents();
         const mappedEvents = res.data.map((event: EventType) => ({
@@ -60,48 +56,50 @@ export default function page() {
         setEvents(mappedEvents);
       } catch (err) {
         console.error("Failed to fetch users", err);
+      } finally {
+        setLoading(false);
       }
     };
-  
-    fetchReminders();
-  }, []);
 
-  const handleSubmit = async (data: any) => {
-    console.log("Submitted form data:", data);
+    const handleSubmit = async (data: any) => {
+        const calendarType = data.extendedProps?.calendar;  
+        const eventTitle = data.title;
+        const eventDescription = data.description;  
+        const eventStart = data.start; 
 
-    const calendarType = data.extendedProps?.calendar;  
-    const eventTitle = data.title;
-    const eventDescription = data.description;  
-    const eventStart = data.start; 
+        try {
+        const res = await addEventCalender({ 
+            type: calendarType,  
+            title: eventTitle,  
+            description: eventDescription, 
+            reminderDate: eventStart, 
+            });
+            if ( res.status == 200 ) {
+            fetchReminders();
+            setAlert({
+                variant: 'success',
+                title: 'Event Success',
+                message: 'Event has been successfully created.',
+            });
+            } else {
+            setAlert({
+                variant: 'error',
+                title: 'Event Failed',
+                message: 'Event failed to created.',
+            });
+            }
+            
+            setTimeout(() => {
+            setAlert(null); 
+            }, 3000);
+    
+        } catch (error) {
+        console.error('Gagal hapus user', error);
+        }
+    };
 
-    try {
-       const res = await addEventCalender({ 
-          Type: calendarType,  
-          Title: eventTitle,  
-          Description: eventDescription, 
-          ReminderDate: eventStart, 
-        });
-  
-        setAlert({
-          variant: 'success',
-          title: 'User Deleted',
-          message: 'User has been successfully deleted.',
-        });
-  
-        setTimeout(() => {
-          setAlert(null); 
-        }, 3000);
-   
-      
-    } catch (error) {
-      console.error('Gagal hapus user', error);
-    }
-  };
-
-
-  return (
+    return (
     <div>
-      {/* Tampilkan alert jika ada */}
         {alert && alert.variant && (
         <Alert
           variant={alert.variant}
@@ -111,7 +109,16 @@ export default function page() {
       )}
       <div className="mt-4">
         <PageBreadcrumb pageTitle="Calendar" />
-        <Calendar initialEvents={events} onSubmit={handleSubmit} />
+          {loading ? (
+            <p className="text-center text-gray-500 py-10">Loading events...</p>
+          ) : (
+            <Calendar
+              initialEvents={events}
+              onSubmit={handleSubmit}
+              userRole={role}
+              calendarsEvents={calendarsEvents}
+            />
+          )}
       </div>
     </div>
   );

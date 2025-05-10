@@ -20,7 +20,6 @@ interface OrderSummary {
 
 interface RecentOrdersProps {
   recent_orders: OrderSummary[];
-
 }
 
 export default function RecentOrders({ recent_orders }: RecentOrdersProps) {

@@ -15,7 +15,7 @@ import { register } from "../../services/authService";
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const role = "subsciber";
+  const role = "subscriber";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 

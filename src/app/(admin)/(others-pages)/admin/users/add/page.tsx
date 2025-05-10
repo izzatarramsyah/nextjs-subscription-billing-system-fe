@@ -1,13 +1,21 @@
 // src/app/(admin)/(others-pages)/users/add/page.tsx
 "use client";
 
+import dynamic from "next/dynamic";
 import React, { useState } from "react";
-import UserForm from "@/components/users/UserForm";
 import { register } from "@/services/authService";
 import Alert from "@/components/ui/alert/Alert";
+import { useRouter } from "next/navigation"; 
+
+const UserForm = dynamic(() => import('@/components/users/UserForm'), {
+  ssr: false,
+  loading: () => <p className="text-center py-10">Loading Form...</p>,
+});
 
 export default function AddUserPage() {
 
+  const router = useRouter();  
+  
   const [alert, setAlert] = useState<{
     variant: "success" | "error" | "warning" | "info" | null;
     title: string;
@@ -35,7 +43,8 @@ export default function AddUserPage() {
         });
       }
       setTimeout(() => {
-        setAlert(null); // Hide alert after 3 seconds
+        setAlert(null); 
+        router.push("/admin/users");
       }, 3000);
     } catch (err) {
       console.error("Error submitting user", err);
@@ -44,13 +53,15 @@ export default function AddUserPage() {
 
   return (
     <div>
-      {alert && alert.variant && (
-        <Alert
-          variant={alert.variant}
-          title={alert.title}
-          message={alert.message}
-        />
-      )}
+     {alert && alert.variant && (
+          <div className="mb-4">
+            <Alert 
+              variant={alert.variant}
+              title={alert.title}
+              message={alert.message}
+            />
+          </div>
+        )}
       <div className="p-4">
         <UserForm mode="add" onSubmit={handleSubmit} />
       </div>

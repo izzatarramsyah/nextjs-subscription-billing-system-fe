@@ -1,351 +1,93 @@
-import axios from "axios";
-import Cookies from 'js-cookie';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+import { request } from './apiHelper';
 
-export const getDashboardInfo = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/dashboard/`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
+// Dashboard
+export const getDashboardInfo = () => request.get('/dashboard/');
 
+// User
+export const getAllUsers = () => request.get('/user/getListUsers');
+export const getUserByRole = (role: string) => request.get(`/user/GetByRole/${role}`);
+export const getUserByID = (id: string) => request.get(`/user/getByID/${id}`);
+export const getUser = () => request.get('/user/getUser');
+export const updateUser = (data: any) => request.post('/user/updateUser', data);
+export const updateStatusUser = (data: any) => request.post('/user/updateUserStatus', data);
+export const deleteUser = (id: string) => request.get(`/user/deleteUser?id=${id}`);
 
-export const getAllUsers = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/user/getListUsers`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const updateUser = async (data: {
-  id: string;
-  email: string;
-  password: string;
-  role: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.post(`${API_BASE_URL}/user/updateUser`,data,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`, 
-      },
-    }
-  );
-  return response.data;
-};
-
-export const deleteUser = async (data: {
-  id: string;
+// Product
+export const getProducts = () => request.get('/product/getListProduct');
+export const updateStatusProduct = (data : {
+  id : string;
   status: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.post(`${API_BASE_URL}/user/updateUserStatus`,data,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`, 
-      },
-    }
-  );
-  return response.data;
-};
-
-export const getUserByRole = async (data : {
-  role: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/user/GetByRole/${data.role}`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getUserByID = async (data : {
-  id: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/user/getByID/${data.id}`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getUser = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/user/getUser`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getProducts = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/product/getListProduct`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getProductByID = async ( data : {
-  id:string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/product/getByID/${data.id}`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getProductsByOwnerID = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/product/getByOwnerID`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const updateStatusProduct = async (data: {
-  id: string;
-  status: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.post(
-    `${API_BASE_URL}/product/UpdateStatusProduct/${data.id}`,
-    { status: data.status }, 
-    {
-      headers: {
-        Authorization: `Bearer ${token}`, 
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  return response.data;
-};
-
-export const createPlan = async ( data : {
-  ProductID : string;
-  Name : string;
-  Price : number;
-  DurationMonths : number;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.post(`${API_BASE_URL}/plan/createPlan`, data, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getPlans = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/plan/getListPlans`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getPlanById = async ( data : {
-  id:string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/plan/getByID/${data.id}`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getPlanByProductId = async ( data : {
-  id:string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/plan/getByProductID/${data.id}`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getLibraryByUserID = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/library/getByID`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const subscribe = async ( data : {
-  plan_id: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.post(`${API_BASE_URL}/subscription/Subscribe`, data, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const payment = async ( data : {
-  SubscriptionID: string;
-  Amount: string;
-  PaymentMethod: string;
-}) => {
-  const token = Cookies.get('token');
-  const response = await axios.post(`${API_BASE_URL}/payment/CreatePayment`, data, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getByOwnerID = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/subscriber/getByOwnerID`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getSubscribersByOwnerID = async () => {
-  const token = Cookies.get('token');
-  const response = await axios.get(`${API_BASE_URL}/subscriber/getByOwnerID`, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-
-export const getRevenueReport = async ( data : {
-   start_date : string,
-   end_date: string
-}) => {
-  const token = Cookies.get('token'); 
-  const response = await axios.post(`${API_BASE_URL}/report/getRevenueReport`, data, {
-    headers: {
-      Authorization: `${token}`,
-    },
-  });
-  return response.data;
-};
-
-export const getEvents = async ()  => {
- const token = Cookies.get('token'); 
- const response = await axios.get(`${API_BASE_URL}/reaminder/getAll`, {
-   headers: {
-     Authorization: `${token}`,
-   },
- });
- return response.data;
-};
-
-export const addEventCalender = async ( data : {
-  Type : string,
-  Title: string,
-  Description: string,
-  ReminderDate: string,
-}) => {
- const token = Cookies.get('token'); 
- const response = await axios.post(`${API_BASE_URL}/reaminder/create`, data, {
-   headers: {
-     Authorization: `${token}`,
-   },
- });
- return response.data;
-};
-
-export const addProduct = async (data: {
-  Name: string;
-  Description: string;
-  OwnerID: string;
-  File: File;  
-}) => {
-  const token = Cookies.get('token'); 
+}) => request.post(`/product/updateStatusProduct`, data);
+export const getProductByID = (id: string) => request.get(`/product/getByID/${id}`);
+export const getProductsByOwnerID = () => request.get(`/product/getByOwnerID`);
+export const updateProduct = (data: {
+    ProductId: string;
+    Name: string;
+    Description: string;
+    OwnerID: string;
+    File: File;
+  }) => {
+    const formData = new FormData();
+    
+    // Menambahkan data ke FormData
+    formData.append('ID', data.ProductId);
+    formData.append('Name', data.Name);
+    formData.append('Description', data.Description);
+    formData.append('OwnerID', data.OwnerID);
+    formData.append('File', data.File);
   
-  const formData = new FormData();
-  formData.append('Name', data.Name);
-  formData.append('Description', data.Description);
-  formData.append('OwnerID', data.OwnerID);
-  formData.append('File', data.File); 
-
-  try {
-    const response = await axios.post(`${API_BASE_URL}/product/createProduct`, formData, {
-      headers: {
-        'Authorization': `${token}`,
-        'Content-Type': 'multipart/form-data',  
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error('Error uploading product:', error);
-    throw error; 
-  }
+    return request.upload('/product/updateProduct', formData);
+};
+export const addProduct = (data: {
+    Name: string;
+    Description: string;
+    OwnerID: string;
+    File: File;
+  }) => {
+    const formData = new FormData();
+    
+    // Menambahkan data ke FormData
+    formData.append('Name', data.Name);
+    formData.append('Description', data.Description);
+    formData.append('OwnerID', data.OwnerID);
+    formData.append('File', data.File);
+  
+    return request.upload('/product/createProduct', formData);
 };
 
-export const getAccessProduct = async (data: {
-  id: string;
-}) => {
-  const token = Cookies.get('token'); 
-  try {
-    const response = await axios.get(`${API_BASE_URL}/ebook/getAccess/${data.id}`, {
-      headers: {
-        'Authorization': `${token}`,
-      },
-    });
+// Plan
+export const createPlan = (data: any) => request.post('/plan/createPlan', data);
+export const updatePlan = (data: any) => request.post('/plan/updatePlan', data);
+export const deletePlan = (id: string) => request.delete(`/plan/deletePlan/${id}`);
+export const getPlans = () => request.get('/plan/getListPlans');
+export const getPlanById = (id: string) => request.get(`/plan/getByID/${id}`);
+export const getPlanByProductId = (id: string) => request.get(`/plan/getByProductID/${id}`);
 
-    return response.data;
-  } catch (error) {
-    console.error('Error uploading product:', error);
-    throw error; 
-  }
-};
+// Report
+export const getRevenueReport = (data: { start_date: string; end_date: string }) => request.post('/report/getRevenueReport', data);
 
-export const serveProduct = async (data: {
-  fileUrl: string;
-}) => {
-  const token = Cookies.get('token'); 
-  try {
-    const response = await axios.post(`${API_BASE_URL}/ebook/serve`, data, {
-      headers: {
-        'Authorization': `${token}`,
-      },
-      responseType: 'blob',
-    });
-    return response;
-  } catch (error) {
-    console.error('Error uploading product:', error);
-    throw error; 
-  }
-};
+// Ebook
+export const getAccessProduct = (id: string) => request.get(`/ebook/getAccess/${id}`);
+export const serveProduct = (data: any) => request.postWithBlob('/ebook/serve', data);
+
+//Subscription
+export const subscribe = (data: any) => request.post('/subscription/Subscribe', data);
+
+//Payment
+export const payment = (data: any) => request.post('/payment/CreatePayment', data);
+export const getAllPaymentDetails = () => request.get('/payment/GetAllPaymentDetails');
+export const updatePaymentStatus = (data : {
+  id : string;
+  status: string;
+}) => request.post(`/payment/updatePaymentStatus`, data);
+
+//Library
+export const getLibraryByUserID = () => request.get('/library/getByID');
+
+//Calender
+export const getEvents = () => request.get('/reminder/getAll');
+export const addEventCalender = (data: any) => request.post('/reminder/create', data);
+
+// Subscriber
+export const getSubscribersByOwnerID = () => request.get('/subscriber/getByOwnerID');

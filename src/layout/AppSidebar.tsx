@@ -14,7 +14,8 @@ import {
   ChevronDownIcon,
   FolderIcon,
   UserIcon,
-  TableIcon 
+  TableIcon,
+  DollarLineIcon
 } from "../icons/index";
 
 type NavItem = {
@@ -39,24 +40,35 @@ const navItems: NavItem[] = [
     roles: ["admin", "owner", "subscriber"],
   },
   {
-    icon: <ListIcon />,
+    icon: <DollarLineIcon />,
+    name: "Payment",
+    path: "/admin/payments",
+    roles: ["admin"],
+  },
+  {
+    icon: <GridIcon />,
+    name: "List Product",
+    path: "/guest",
+    roles: ["guest"],
+  },
+  {
+    icon: <GridIcon />,
     name: "Product Management",
     path: "/admin/products",
     roles: ["admin"],
   },
   {
-    icon: <ListIcon />,
+    icon: <GridIcon />,
     name: "Product Management",
     path: "/owners/products",
     roles: ["owner"],
   },
   {
-    icon: <ListIcon />,
+    icon: <GridIcon />,
     name: "List Product",
     path: "/subscriber/products",
     roles: ["subscriber"],
   },
-
   {
     icon: <FolderIcon />,
     name: "My Library",
@@ -239,13 +251,13 @@ const AppSidebar: React.FC = () => {
     if (userCookie) {
       try {
         const parsed = JSON.parse(userCookie);
-        setCurrentRole(parsed.Role || "subscriber");
+        setCurrentRole(parsed.Role || "guest");
       } catch (error) {
-        setCurrentRole("subscriber");
+        setCurrentRole("guest");
       }
     } else {
-      setCurrentRole("subscriber");
-    }
+      setCurrentRole("guest");
+    } 
 
     let submenuMatched = false;
     ["main"].forEach((menuType) => {

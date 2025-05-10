@@ -22,10 +22,11 @@ import { Modal } from "@/components/ui/modal";
   interface CalendarProps {
     initialEvents: CalendarEvent[];
     onSubmit: (data: any) => void;
+    userRole: string;
+    calendarsEvents: Record<string, string>;
   }
 
-  // const Calendar: React.FC = () => {
-    const Calendar: React.FC<CalendarProps> = ({ initialEvents, onSubmit }) => {
+  const Calendar: React.FC<CalendarProps> = ({ initialEvents, onSubmit, userRole, calendarsEvents }) => {
 
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [eventTitle, setEventTitle] = useState("");
@@ -37,12 +38,7 @@ import { Modal } from "@/components/ui/modal";
     const calendarRef = useRef<FullCalendar>(null);
     const { isOpen, openModal, closeModal } = useModal();
 
-    const calendarsEvents = {
-      Payment_Due_Date: "danger",
-      Event_Date: "success",
-      Subs_Due_Date: "warning",
-    };
-
+  
     useEffect(() => {
       setEvents(initialEvents);
     }, [initialEvents]);
@@ -109,27 +105,45 @@ import { Modal } from "@/components/ui/modal";
     return (
       <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-              left: "prev,next addEventButton",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            events={events}
-            selectable={true}
-            select={handleDateSelect}
-            eventClick={handleEventClick}
-            eventContent={renderEventContent}
-            customButtons={{
-              addEventButton: {
-                text: "Add Event +",
-                click: openModal,
-              },
-            }}
-          />
+          {userRole === "subscriber" || userRole === "owner"  ? (
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: "prev,next",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek,timeGridDay",
+              }}
+              events={events}
+              selectable={true}
+              select={handleDateSelect}
+              eventClick={handleEventClick}
+              eventContent={renderEventContent}
+            />
+          ) : (
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: "prev,next addEventButton",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek,timeGridDay",
+              }}
+              events={events}
+              selectable={true}
+              select={handleDateSelect}
+              eventClick={handleEventClick}
+              eventContent={renderEventContent}
+              customButtons={{
+                addEventButton: {
+                  text: "Add Event +",
+                  click: openModal,
+                },
+              }}
+            />
+          )}
         </div>
         <Modal
           isOpen={isOpen}
@@ -161,7 +175,7 @@ import { Modal } from "@/components/ui/modal";
                   />
                 </div>
               </div>
-              <div>
+              <div className="mt-6">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                     Event Description

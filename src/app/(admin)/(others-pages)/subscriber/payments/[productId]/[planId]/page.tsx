@@ -1,11 +1,16 @@
 'use client';
 
+import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";  // Menggunakan useParams untuk mendapatkan ID
-import PaymentForm from "@/components/payments/PaymentForm";
-import { getProductByID , getPlanById, subscribe, payment} from "@/services/apiService";  // Pastikan ini adalah API service yang tepat
+import { useParams } from "next/navigation";  
+import { getProductByID , getPlanById, subscribe, payment} from "@/services/apiService";  
 import Alert from "@/components/ui/alert/Alert";
+
+const PaymentForm = dynamic(() => import('@/components/payments/PaymentForm'), {
+  ssr: false,
+  loading: () => <p className="text-center py-10">Loading Form...</p>,
+});
 
 interface Product {
   ID: string;
@@ -21,14 +26,12 @@ interface Plan {
 }
 
 export default function PaymentPage() {
-  const { productId, planId } = useParams() as { productId: string, planId: string };  // Mengambil id dari URL
+  const { productId, planId } = useParams() as { productId: string, planId: string };  
   const router = useRouter();
   
   const [loading, setLoading] = useState<boolean>(true);
   const [product, setProduct] = useState<Product>({} as Product);
   const [plan, setPlan] = useState<Plan>({} as Plan);
-
-  const [error, setError] = useState<string | null>(null);
 
   const [alert, setAlert] = useState<{
       variant: "success" | "error" | "warning" | "info" | null;
@@ -41,100 +44,113 @@ export default function PaymentPage() {
       if (!productId || !planId) return; // Jika id tidak ada, hentikan proses fetching
 
       try {
-        // Fetch product
-        const productRes = await getProductByID({ id: productId });
-        setProduct(productRes);
 
-        // Fetch plan
-        const planRes = await getPlanById({ id: planId });
-        setPlan(planRes);
+        const productRes = await getProductByID(productId);
+        setProduct(productRes?.status === 200 && productRes.data ? productRes.data : []);
+
+        const planRes = await getPlanById(planId);
+        setPlan(planRes?.status === 200 && planRes.data ? planRes.data : []);
+
       } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Terjadi kesalahan saat memuat produk atau plan.");
+        setAlert({
+          variant: 'error',
+          title: 'System Error',
+          message: 'Failed to open payment detail',
+        });
+        setTimeout(() => {
+          setAlert(null);
+          router.push(`/subscriber/products`);
+        }, 3000);
       } finally {
         setLoading(false);
       }
+
     };
 
     fetchProductAndPlan();
   }, [productId, planId]);
 
   const handleSubmit = async (data: any) => {
-    console.log(data)
+
     try {
-      // 1. Lakukan subscription
+ 
       const subscriptionRes = await subscribe({ plan_id: data.planId });
   
-      if (!subscriptionRes?.subscriber_id) {
+      if (!subscriptionRes?.data) {
         setAlert({
           variant: 'error',
           title: 'Subscription Failed',
-          message: 'Gagal melakukan subscription. Silakan coba lagi.',
+          message: 'Failed to subscribe. Please try again.',
         });
         return;
       }
   
-      // 2. Lakukan pembayaran
       const paymentRes = await payment({
-        SubscriptionID: subscriptionRes.subscriber_id,
+        SubscriptionID: subscriptionRes.data,
         Amount: data.planPrice,
         PaymentMethod: data.paymentMethod,
       });
-  
-      setAlert({
-        variant: 'success',
-        title: 'Payment Success',
-        message: 'Pembayaran berhasil dilakukan!',
-      });
-  
-      // Tunggu sebentar lalu redirect
-      setTimeout(() => {
-        setAlert(null);
-        router.push(`/subscriber/products`);
-      }, 3000);
+      
+      if ( paymentRes.status == 200 ) {
+        setAlert({
+          variant: 'success',
+          title: 'Payment Success',
+          message: 'Payment has been proccessed!',
+        });
+      } else {
+        setAlert({
+          variant: 'error',
+          title: 'Payment Failed',
+          message: 'Payment Failed. Please try again!',
+        });
+      }
   
     } catch (error: any) {
-      console.error("Terjadi kesalahan saat submit:", error);
       setAlert({
         variant: 'error',
-        title: 'Terjadi Kesalahan',
-        message: error?.message || 'Terjadi masalah saat memproses pembayaran.',
+        title: 'System Error',
+        message: 'Failed while proccesing payment',
       });
+      
     }
+
+    setTimeout(() => {
+      setAlert(null);
+      router.push(`/subscriber/products`);
+    }, 3000);
   };
   
 
   if (loading) {
-    return <div>Loading...</div>;  // Menampilkan loading state saat data produk sedang diambil
-  }
-
-  if (error) {
-    return <div>{error}</div>;  // Menampilkan pesan kesalahan
+    return <div>Loading...</div>;  
   }
 
   if (!product) {
-    return <div>Payment not found</div>;  // Menampilkan pesan jika produk tidak ditemukan
+    return <div>Payment not found</div>;  
   }
 
   return (
     <div className="p-4">
-  {/* Alert tampil di atas, dengan jarak ke bawah */}
-  {alert && alert.variant && (
-    <div className="mb-6">
-      <Alert
-        variant={alert.variant}
-        title={alert.title}
-        message={alert.message}
+      {/* Alert tampil di atas, dengan jarak ke bawah */}
+      {alert && alert.variant && (
+        <div className="mb-4">
+          <Alert
+            variant={alert.variant}
+            title={alert.title}
+            message={alert.message}
+          />
+        </div>
+      )}
+          {loading ? (
+            <p className="text-center text-gray-500 py-10">Loading data...</p>
+          ) : (
+      <PaymentForm 
+        product={product} 
+        plan={plan} 
+        onSubmit={handleSubmit} 
       />
+          )}
     </div>
-  )}
-
-  <PaymentForm 
-    product={product} 
-    plan={plan} 
-    onSubmit={handleSubmit} 
-  />
-</div>
 
   );
 }
